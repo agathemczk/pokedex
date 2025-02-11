@@ -42,12 +42,37 @@ async function loadTypes(type) {
     }
 }
 
-async function loadPoke(generation, selectedType) {
+async function loadPoke(generation, selectedType, selectedCritere) {
     try {
         const response = await fetch(`https://pokebuildapi.fr/api/v1/pokemon/generation/${generation}`);
-        const data = await response.json();
+        let data = await response.json();
 
         console.log(data);
+
+        if (selectedType) {
+            data = data.filter(pokemon => pokemon.apiTypes.some(type => type.name === selectedType));
+        }
+
+        if(selectedCritere) {
+            data = data.sort((a, b) => {
+                switch(selectedCritere) {
+                    case "1":
+                        return a.name.localeCompare(b.name);
+                    case "2":
+                        return b.stats.HP - a.stats.HP;
+                    case "3":
+                        return b.stats.attack - a.stats.attack;
+                    case "4":
+                        return b.stats.defense - a.stats.defense;
+                    case "5":
+                        return b.stats.special_attack - a.stats.special_attack;
+                    case "6":
+                        return b.stats.speed - a.stats.speed;
+                    default:
+                        return 0;
+                }
+            })
+        }
 
         const mainElement = document.querySelector('main');
         mainElement.innerHTML = '';
@@ -164,14 +189,22 @@ async function loadPoke(generation, selectedType) {
 document.addEventListener('DOMContentLoaded', () => {
     const generationSelect = document.querySelector('#filtre select');
     const typesContainer = document.getElementById('types');
+    const critereSelect = document.querySelector('#tri select');
 
     let selectedGeneration = generationSelect.value;
     let selectedType = null;
+    let selectedCritere = critereSelect.value;
 
     generationSelect.addEventListener('change', (event) => {
         selectedGeneration = event.target.value;
         console.log('Génération sélectionnée :', selectedGeneration);
-        loadPoke(selectedGeneration, selectedType);
+        loadPoke(selectedGeneration, selectedType, selectedCritere);
+    });
+
+    critereSelect.addEventListener('change', (event) => {
+        selectedCritere = event.target.value;
+        console.log('Critère sélectionné :', selectedCritere);
+        loadPoke(selectedGeneration, selectedType, selectedCritere);
     });
 
 
@@ -202,11 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleSelection(typeButton);
             selectedType = typeButton.classList.contains('selected') ? typeButton.dataset.type : null;
             console.log('Type sélectionné :', selectedType);
-            loadPoke(selectedGeneration, selectedType);
+            loadPoke(selectedGeneration, selectedType, selectedCritere);
         }
     });
 
     loadTypes();
-    loadPoke(1,null);
+    loadPoke(1,null,null);
 });
 
